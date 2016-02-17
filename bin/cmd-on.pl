@@ -4,7 +4,7 @@ use warnings;
 use autodie;
 use v5.10;
 
-package App::Cmd::On;
+package CmdOn;
 
 use File::Basename;
 use Getopt::Long;
@@ -21,12 +21,11 @@ sub set_options {
 
   # Now all that's left is where we want to do our work
   # TODO(pscollins): validate we didn't get any extra stuff
-  return (dirname(@ARGV[0]), $pat);
+  return (dirname($ARGV[0]), $pat);
 }
 
 sub find_idx_file {
   my ($workfile, $idx_filename) = @_;
-  # Harmless if we were given a directory in the first place
   my $workdir = dirname($workfile);
 
   die("Not a directory: $workdir") unless -d $workdir;
@@ -40,18 +39,15 @@ sub get_cur_idx {
   # Default to 0 if there's no file, or it's not plain text
   my $cur_idx = 0;
 
-  open(my $fh, '<', $idx_file);
-
   if (-T $idx_file) {
+    open(my $fh, '<', $idx_file) or die "Can't open $idx_file";
     # We found a plain-text idx file, let's use the number we found there
     $cur_idx = <$fh> + 1;
   }
 
   # Write back what we found and clobber any junk
-  truncate($fh, 0);
-  say $fh $cur_num;
-
-  # Now we don't need it any more
+  open(my $fh, '>', $idx_file) or die "Can't open $idx_file";
+  say $fh "$cur_idx";
   close $fh;
 
   return $cur_idx;
